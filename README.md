@@ -10,21 +10,6 @@
 
 ---
 
-## 📌 Overview
-This repository contains a robust, fully-generalized machine learning pipeline developed for the **Flipkart Gridlock Hackathon 2.0**. The solution achieves a highly competitive **~94.7% Out-Of-Fold (OOF) R²** utilizing advanced feature engineering and an optimized gradient-boosting ensemble.
-
-![Flowchart](assets/flowchart.png)
-
-## 📖 Table of Contents
-- [Problem Statement](#-problem-statement)
-- [Dataset Integrity & Leakage Mitigation](#️-dataset-integrity--leakage-mitigation)
-- [Architecture & Feature Engineering](#️-architecture--feature-engineering)
-- [Ensemble Models & Regularization](#-ensemble-models--regularization)
-- [Repository Structure](#-repository-structure)
-- [Installation & Execution](#-installation--execution)
-
----
-
 ## 🎯 Problem Statement
 The challenge requires forecasting ride-hailing traffic demand across **1,249 unique geohash zones** for a specific target day (Day 49), provided 48 days of historical training data. Traffic demand is presented as a normalized continuous value between `0.0` and `1.0`. The primary evaluation metric is **R² (Coefficient of Determination)**.
 
@@ -32,6 +17,24 @@ The dataset includes 41,778 location-time pairs per day encompassing:
 - **Spatio-Temporal Features:** `geohash` (6-character geographic cell), `day` (1-48), `timestamp` (15-minute intervals, e.g., "23:45").
 - **Road Topology:** `RoadType` (Highway, Arterial, Residential, etc.), `NumberofLanes`, presence of `LargeVehicles`, and `Landmarks`.
 - **Environmental Factors:** Ambient `Temperature` and categorical `Weather` conditions.
+
+---
+
+<p align="center">
+  <img src="assets/flowchart.png" alt="Flowchart">
+</p>
+
+## 📌 Overview
+This repository contains a robust, fully-generalized machine learning pipeline developed for the **Flipkart Gridlock Hackathon 2.0**. The solution achieves a highly competitive **~94.7% Out-Of-Fold (OOF) R²** utilizing advanced feature engineering and an optimized gradient-boosting ensemble.
+
+## 📖 Table of Contents
+- [Problem Statement](#-problem-statement)
+- [Overview](#-overview)
+- [Dataset Integrity & Leakage Mitigation](#️-dataset-integrity--leakage-mitigation)
+- [Architecture & Feature Engineering](#️-architecture--feature-engineering)
+- [Ensemble Models & Regularization](#-ensemble-models--regularization)
+- [Repository Structure](#-repository-structure)
+- [Installation & Execution](#-installation--execution)
 
 ---
 
