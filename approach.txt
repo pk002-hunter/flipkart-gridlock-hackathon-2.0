@@ -1,0 +1,117 @@
+Flipkart Gridlock Hackathon 2.0 — My Approach
+==============================================
+(For the full technical report with diagrams and charts, check detailed_approach.pdf)
+
+
+What I Was Trying to Do
+------------------------
+The task was pretty straightforward — predict traffic demand for 41,778 location-time
+pairs on Day 49, using 48 days of historical data. Demand is a normalized value from 0 to 1.
+The data has geohashes (location codes), timestamps in 15-minute slots, road info, weather,
+and temperature. Evaluation is R2 score — basically how well your predictions match the truth.
+
+
+The Kaggle Leak Thing
+----------------------
+Okay so the first thing I noticed during EDA was that the geohash codes, timestamps, and
+demand values in the Flipkart dataset are identical to an old "Grab Traffic Demand" dataset
+on Kaggle from 2019. Like a perfect 1:1 match.
+
+That means if you just do a table join between the test set and the Kaggle data using
+(geohash, day, timestamp) as a key, you get the exact answers. 500+ people did exactly
+that and scored 100/100 on the leaderboard.
+
+I didn't do that. Not because I couldn't figure it out — I did find it — but because:
+  1. If Flipkart changes the test set for private evaluation, that approach crashes completely.
+  2. Any judge who looks at the code will see there's zero ML in it.
+  3. It's just not interesting and doesn't show any real skill.
+
+So I built an actual ML pipeline instead. It scores ~94.7% R2 which I'm pretty happy with.
+
+
+How I Engineered the Features
+-------------------------------
+This was the most interesting part of the problem. Raw features like "timestamp = 8:30"
+or "geohash = qp02z1" aren't useful to tree models by default, so I had to transform them.
+
+Time (Cyclical Encoding):
+  The timestamp is cyclic — 23:45 and 00:00 are literally 15 minutes apart, but if you
+  treat them as numbers (23.75 vs 0), the model thinks they're far apart. To fix this,
+  I mapped hours and minutes onto a unit circle using sin and cos:
+    hour_sin = sin(2*pi * hour / 24),  hour_cos = cos(2*pi * hour / 24)
+    min_sin  = sin(2*pi * minute / 60), min_cos  = cos(2*pi * minute / 60)
+  Now midnight and the end of the day are geometrically close. This is a classic trick
+  for time-series problems and it made a real difference here.
+
+Location (Geohash Target Encoding):
+  There are 1,249 unique geohash codes. You can't one-hot encode that — it'd create 1,249
+  columns and tank the model. So instead I grouped geohashes by their 4- and 5-character
+  prefixes (which roughly correspond to district and neighbourhood level zones), then encoded
+  each group with its historical mean demand.
+  The key thing here is that I used 5-fold out-of-fold encoding — meaning for each fold,
+  the encoding was computed only from the training portion of that fold, so there's zero
+  data leakage. I also decoded lat/lon from the geohash for raw spatial coordinates.
+
+Lag-1 Demand (The Big One):
+  This single feature was responsible for most of the score jump, pushing me from ~85% to
+  ~94.7% R2. The idea is simple: traffic at a given location at 8:30 AM today is almost
+  identical to traffic at the same location at 8:30 AM yesterday. So for every Day 49 test
+  row, I looked up the demand from Day 48 at the same geohash and timestamp and used it
+  as a feature called `lag_1_demand`. For anything missing, I fell back to the geohash mean.
+  This is literally how Uber and Google Maps do short-term traffic forecasting.
+
+Interaction Flags:
+  Created a few simple boolean features that the model would otherwise have to discover:
+    - is_rush_hour : morning (7-9 AM) and evening (5-7 PM) rush windows
+    - is_night     : late night to early morning (10 PM to 5 AM)
+    - highway_rush : highway road type AND rush hour at the same time (huge demand spikes)
+    - lanes_x_road : number of lanes times encoded road type (road capacity signal)
+
+
+The Model Setup
+----------------
+I didn't use just one model. I built an ensemble of three gradient boosters, each trained
+inside a 5-fold cross-validation loop:
+
+  - LightGBM (40% of the final blend): fastest, leaf-wise growth, best raw accuracy
+  - XGBoost  (30%): more conservative depth-wise growth, great at stabilizing the blend
+  - CatBoost (30%): handles categorical stuff like RoadType and Weather natively
+
+For regularization I deliberately kept trees shallow (depth=6) and used L2 penalties
+(reg_lambda=1.5) with a high min_child_samples=25. The idea is to force the model to
+learn big, universal patterns rather than overfitting to tiny noise in the training data.
+
+Early stopping at 50 rounds made sure each model stopped at exactly the right complexity.
+
+Final out-of-fold R2 score: 0.947 (94.7%). This is a genuine estimate of how the
+model performs on data it has never seen before.
+
+
+Why This Should Hold Up
+------------------------
+  - Zero Kaggle data in the code. If Flipkart swaps the test set, the model still works.
+  - The lag feature is based on real traffic science, not dataset-specific memorization.
+  - OOF cross-validation guarantees the score is real and not inflated by overfitting.
+  - Heavy regularization prevents the model from latching onto training noise.
+  - You can run the whole thing from scratch with: python train_predict.py
+
+
+Files in This Zip
+------------------
+  detailed_approach.pdf
+      A full 5-page technical report. Has the pipeline architecture diagram, process flowchart,
+      feature charts (cyclical encoding visualization, spatial encoding bar chart, lag demand
+      time-series), and a regularization hyperparameter table with every value explained.
+      Worth reading if you want the full picture with visuals.
+
+  traffic_demand_prediction.ipynb
+      Jupyter notebook with EDA plots (demand distribution, road type analysis, peak hour charts),
+      followed by the complete ML pipeline step by step. Good for reviewing the reasoning process.
+
+  feature_engineering.py
+      All the feature building logic in one clean module — cyclical encoding, geohash OOF
+      target encoding, lag feature mapping, and interaction flag creation.
+
+  train_predict.py
+      The main script. Loads data, calls feature engineering, runs the 5-fold ensemble,
+      blends predictions at 40/30/30, outputs submission.csv. Just run: python train_predict.py

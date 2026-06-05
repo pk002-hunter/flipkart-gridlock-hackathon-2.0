@@ -1,0 +1,10 @@
+dataset/
+__pycache__/
+catboost_info/
+*.csv
+!submission.csv
+flipkart_source_files.zip
+patch_ipynb.py
+patch_ipynb2.py
+.ipynb_checkpoints/
+*.ttf
