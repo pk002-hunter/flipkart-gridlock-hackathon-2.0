@@ -3,9 +3,15 @@
 ![Flowchart](assets/flowchart.png)
 
 ## Overview
-This repository contains my solution for the **Flipkart Gridlock Hackathon 2.0**. The task was to predict traffic demand for 41,778 location-time pairs on Day 49, using 48 days of historical data. The dataset includes geohashes (location codes), timestamps in 15-minute slots, road topology, weather, and temperature.
+This repository contains my solution for the **Flipkart Gridlock Hackathon 2.0**. 
 
-The evaluation metric is **R² (Coefficient of Determination)**.
+### The Problem Statement
+The challenge is to forecast ride-hailing traffic demand across **1,249 unique geohash zones** for a specific target day (Day 49), given 48 days of historical training data. Traffic demand is provided as a normalized continuous value between 0.0 and 1.0. The evaluation metric for the competition is **R² (Coefficient of Determination)**.
+
+The dataset includes 41,778 location-time pairs per day with the following features:
+- **Spatio-Temporal:** `geohash` (6-character geographic cell), `day` (1-48), `timestamp` (15-minute intervals like "23:45").
+- **Road Topology:** `RoadType` (Highway, Arterial, Residential, etc.), `NumberofLanes`, `LargeVehicles` presence, `Landmarks` presence.
+- **Environmental:** Ambient `Temperature` and categorical `Weather` conditions.
 
 ### The Kaggle Leak
 During EDA, I noticed that the geohash codes, timestamps, and demand values in the Flipkart dataset are identical to the open-source "Grab Traffic Demand" dataset on Kaggle from 2019. This means a perfect 100/100 can be achieved via a simple pandas table-join. 
