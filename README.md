@@ -1,6 +1,6 @@
 # Flipkart Gridlock Hackathon 2.0 — Traffic Demand Prediction
 
-![Flowchart](flowchart.png)
+![Flowchart](assets/flowchart.png)
 
 ## Overview
 This repository contains my solution for the **Flipkart Gridlock Hackathon 2.0**. The task was to predict traffic demand for 41,778 location-time pairs on Day 49, using 48 days of historical data. The dataset includes geohashes (location codes), timestamps in 15-minute slots, road topology, weather, and temperature.
@@ -20,7 +20,7 @@ Instead, I built a robust, fully-generalized machine learning pipeline that scor
 
 ## Architecture & Feature Engineering
 
-![Pipeline](pipeline_diagram.png)
+![Pipeline](assets/pipeline_diagram.png)
 
 Raw features like timestamp strings and geohashes cannot be fed directly to tree models. The solution heavily relies on robust feature engineering:
 
@@ -70,7 +70,6 @@ To prevent overfitting to the training noise, models were strictly regularized:
 - **`traffic_demand_prediction.ipynb`**: Complete Jupyter notebook with Exploratory Data Analysis (EDA) visualizations and the step-by-step pipeline.
 - **`feature_engineering.py`**: Clean, standalone module containing all data cleaning and feature construction logic.
 - **`train_predict.py`**: The main orchestrator script. Run this to train the ensemble and generate `submission.csv`.
-- **`generate_diagrams.py` / `generate_pdf.py`**: Scripts used to programmatically generate the technical report and its visuals using Matplotlib and FPDF2.
 
 ## How to Run
 
